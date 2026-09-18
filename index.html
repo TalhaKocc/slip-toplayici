@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="tr">
 <head>
@@ -275,6 +276,21 @@
   .list-head h2{ font-size:15px; margin:0; }
   .list-head span{ font-size:13px; color:var(--muted); }
 
+  .filter-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .filter-row label{
+    margin:0;
+    white-space:nowrap;
+  }
+  .filter-row select{
+    width:auto;
+    flex:1;
+  }
+
   .table-wrap{ overflow-x:auto; }
   table{
     width:100%;
@@ -453,6 +469,12 @@
       <h2>Girilen slipler</h2>
       <span id="slip-total-label">Slip toplamı: 0,00 TL</span>
     </div>
+    <div class="filter-row">
+      <label for="slip-filter">Bankaya göre filtrele</label>
+      <select id="slip-filter">
+        <option value="">Tümü</option>
+      </select>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -482,6 +504,7 @@
   };
 
   var editingId = null;
+  var filterBank = "";
 
   var BANK_OPTIONS = ["Ziraat Bankası","Türkiye İş Bankası","Garanti BBVA","Yapı Kredi","Akbank"];
 
@@ -535,6 +558,14 @@
     var c = el(cardId);
     if(enabled) c.classList.remove("disabled");
     else c.classList.add("disabled");
+  }
+
+  function buildFilterOptions(){
+    var sel = el("slip-filter");
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Tümü</option>' +
+      BANK_OPTIONS.map(function(b){ return '<option' + (b === current ? ' selected' : '') + '>' + escapeHtml(b) + '</option>'; }).join("");
+    sel.value = current;
   }
 
   function render(){
@@ -606,15 +637,20 @@
       }
     }
 
-    // slip table
+    // slip table (numbered by original entry order, then filtered by bank, then shown newest-first)
     var tbody = el("slip-tbody");
     tbody.innerHTML = "";
+    var numbered = state.slips.map(function(s, i){ return { s: s, no: i + 1 }; });
+    var visible = filterBank ? numbered.filter(function(item){ return item.s.bank === filterBank; }) : numbered;
+
     if(state.slips.length === 0){
       tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Henüz slip eklenmedi.</td></tr>';
+    } else if(visible.length === 0){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="4">' + escapeHtml(filterBank) + ' için slip yok.</td></tr>';
     } else {
-      var ordered = state.slips.slice().reverse();
-      ordered.forEach(function(s, idx){
-        var displayNo = state.slips.length - idx;
+      var ordered = visible.slice().reverse();
+      ordered.forEach(function(item){
+        var s = item.s, displayNo = item.no;
         var tr = document.createElement("tr");
         if(editingId === s.id){
           tr.className = "edit-row";
@@ -757,6 +793,12 @@
     }
   });
 
+  // filter by bank
+  el("slip-filter").addEventListener("change", function(){
+    filterBank = el("slip-filter").value;
+    render();
+  });
+
   // undo (remove last slip)
   el("undo-btn").addEventListener("click", function(){
     state.slips.pop();
@@ -830,6 +872,7 @@
     render();
   });
 
+  buildFilterOptions();
   loadState();
   render();
 })();
