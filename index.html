@@ -563,8 +563,8 @@
     el("points-input").disabled = state.pointsLocked;
     el("points-btn").textContent = state.pointsLocked ? "Değiştir" : "Kaydet ve Kilitle";
     el("points-hint").textContent = state.pointsLocked
-      ? "Puan kilitlendi: " + formatTL(state.points) + ". Gerekirse Değiştir ile düzenleyebilirsin."
-      : "Sabit puan tutarını gir.";
+      ? "Harcama kilitlendi: " + formatTL(state.points) + ". Gerekirse Değiştir ile düzenleyebilirsin."
+      : "Harcama tutarını gir.";
 
     // slip card
     setCardEnabled("card-slip", state.pointsLocked);
